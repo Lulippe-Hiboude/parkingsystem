@@ -9,6 +9,12 @@ public class FareCalculatorService {
         validateOutTime(ticket);
         //TODO: Some tests are failing here. Need to check if this logic is correct
         double durationInMinutes = calculateTicketDurationInMinutes(ticket);
+
+        if(isFreeParking(durationInMinutes)) {
+            ticket.setPrice(0);
+            return;
+        }
+
         double durationInHours = convertMinutesToHours(durationInMinutes);
         double ratePerHour = getRatePerHour(ticket);
 
@@ -32,9 +38,9 @@ public class FareCalculatorService {
     }
 
     private double calculateTicketDurationInMinutes(final Ticket ticket) {
-        long inTimeInMillis = ticket.getInTime().getTime();
-        long outTimeInMillis = ticket.getOutTime().getTime();
-        long durationInMillis = outTimeInMillis - inTimeInMillis;
+        double inTimeInMillis = ticket.getInTime().getTime();
+        double outTimeInMillis = ticket.getOutTime().getTime();
+        double durationInMillis = outTimeInMillis - inTimeInMillis;
         return durationInMillis / 60000.0;
     }
 
@@ -54,5 +60,9 @@ public class FareCalculatorService {
             default:
                 throw new IllegalArgumentException("Unknown Parking Type");
         }
+    }
+
+    public boolean isFreeParking (final double durationInMinutes) {
+        return durationInMinutes < 30.0;
     }
 }
