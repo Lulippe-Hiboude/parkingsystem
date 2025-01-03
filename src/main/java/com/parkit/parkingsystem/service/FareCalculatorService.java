@@ -5,27 +5,54 @@ import com.parkit.parkingsystem.model.Ticket;
 
 public class FareCalculatorService {
 
-    public void calculateFare(Ticket ticket){
-        if( (ticket.getOutTime() == null) || (ticket.getOutTime().before(ticket.getInTime())) ){
-            throw new IllegalArgumentException("Out time provided is incorrect:"+ticket.getOutTime().toString());
+    public void calculateFare(final Ticket ticket) {
+        validateOutTime(ticket);
+        //TODO: Some tests are failing here. Need to check if this logic is correct
+        double durationInMinutes = calculateTicketDurationInMinutes(ticket);
+        double durationInHours = convertMinutesToHours(durationInMinutes);
+        double ratePerHour = getRatePerHour(ticket);
+
+        ticket.setPrice(durationInHours * ratePerHour);
+    }
+
+    private void validateOutTime(final Ticket ticket) {
+        if ((ticket.getOutTime() == null)) {
+            throw new IllegalArgumentException("Out time provided is null");
         }
 
-        int inHour = ticket.getInTime().getHours();
-        int outHour = ticket.getOutTime().getHours();
+        if (ticket.getOutTime().before(ticket.getInTime())) {
+            throw new IllegalArgumentException("Out time provided is incorrect:" + ticket.getOutTime().toString());
+        }
+    }
 
-        //TODO: Some tests are failing here. Need to check if this logic is correct
-        int duration = outHour - inHour;
+    private void validateParkingType(final Ticket ticket) {
+        if (ticket.getParkingSpot().getParkingType() == null) {
+            throw new IllegalArgumentException("Parking Type is null");
+        }
+    }
 
-        switch (ticket.getParkingSpot().getParkingType()){
+    private double calculateTicketDurationInMinutes(final Ticket ticket) {
+        long inTimeInMillis = ticket.getInTime().getTime();
+        long outTimeInMillis = ticket.getOutTime().getTime();
+        long durationInMillis = outTimeInMillis - inTimeInMillis;
+        return durationInMillis / 60000.0;
+    }
+
+    private double convertMinutesToHours(final double minutes) {
+        return minutes / 60.0;
+    }
+
+    private double getRatePerHour(final Ticket ticket) {
+        validateParkingType(ticket);
+        switch (ticket.getParkingSpot().getParkingType()) {
             case CAR: {
-                ticket.setPrice(duration * Fare.CAR_RATE_PER_HOUR);
-                break;
+                return Fare.CAR_RATE_PER_HOUR;
             }
             case BIKE: {
-                ticket.setPrice(duration * Fare.BIKE_RATE_PER_HOUR);
-                break;
+                return Fare.BIKE_RATE_PER_HOUR;
             }
-            default: throw new IllegalArgumentException("Unkown Parking Type");
+            default:
+                throw new IllegalArgumentException("Unknown Parking Type");
         }
     }
 }
