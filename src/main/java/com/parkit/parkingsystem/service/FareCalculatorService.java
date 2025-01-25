@@ -4,8 +4,13 @@ import com.parkit.parkingsystem.constants.Fare;
 import com.parkit.parkingsystem.model.Ticket;
 
 public class FareCalculatorService {
+    private static final double DISCOUNT_RATE = 0.05;
 
     public void calculateFare(final Ticket ticket) {
+        calculateFare(ticket,false);
+    }
+
+    public void calculateFare(final Ticket ticket, final boolean discount) {
         validateOutTime(ticket);
         //TODO: Some tests are failing here. Need to check if this logic is correct
         double durationInMinutes = calculateTicketDurationInMinutes(ticket);
@@ -17,8 +22,12 @@ public class FareCalculatorService {
 
         double durationInHours = convertMinutesToHours(durationInMinutes);
         double ratePerHour = getRatePerHour(ticket);
+        double price = durationInHours * ratePerHour;
 
-        ticket.setPrice(durationInHours * ratePerHour);
+        if(discount){
+        price *= (1-DISCOUNT_RATE);
+         }
+        ticket.setPrice(price);
     }
 
     private void validateOutTime(final Ticket ticket) {
