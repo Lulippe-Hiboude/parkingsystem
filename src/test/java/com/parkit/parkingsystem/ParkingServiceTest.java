@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Date;
 
 import static junit.framework.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -256,5 +257,19 @@ public class ParkingServiceTest {
         assertNotNull(updatedTicket);
         assertEquals(1, updatedTicket.getParkingSpot().getId());
         assertFalse(updatedTicket.getIsRegularCustomer());
+    }
+
+    @Test
+    @DisplayName("should do nothing if parkingSpot is null")
+    void ShouldDoNothingIfParkingSpotIsNullTest() throws Exception {
+        //given
+        when(parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR)).thenReturn(0);
+        when(inputReaderUtil.readSelection()).thenReturn(2);
+        //when
+        parkingService.processIncomingVehicle();
+        //then
+        verify(parkingSpotDAO, times(1)).getNextAvailableSlot(ParkingType.BIKE);
+        verify(ticketDAO, times(0)).saveTicket(any(Ticket.class));
+        verify(inputReaderUtil, times(0)).readVehicleRegistrationNumber();
     }
 }

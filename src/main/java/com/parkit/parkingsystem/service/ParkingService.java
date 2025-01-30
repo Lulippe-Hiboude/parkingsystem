@@ -30,7 +30,7 @@ public class ParkingService {
         try {
             ParkingSpot parkingSpot = getNextParkingNumberIfAvailable();
 
-            if (parkingSpot != null && parkingSpot.getId() > 0) {
+            if (parkingSpot != null) {
                 handleVehicleEntry(parkingSpot);
             }
         } catch (Exception e) {
