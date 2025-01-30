@@ -37,7 +37,34 @@ public class ParkingServiceTest {
     private ArgumentCaptor<Ticket> ticketCaptor;
 
     @Test
-    @DisplayName("should display regular customer message when number of tickets is greater than 0")
+    @DisplayName("should set isRegularCustomer to false when numbers of tickets equal 0")
+    public void processIncomingVehicleOfNonRegularCustomerTest() throws Exception {
+        //given
+        final String vehicleRegistrationNumber ="ABCDEF";
+        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegistrationNumber);
+        when(inputReaderUtil.readSelection()).thenReturn(1);
+        when(parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR)).thenReturn(1);
+        when(ticketDAO.getNbTickets(vehicleRegistrationNumber)).thenReturn(0);
+        when(parkingSpotDAO.updateParking(any(ParkingSpot.class))).thenReturn(true);
+        when(ticketDAO.saveTicket(any(Ticket.class))).thenReturn(true);
+
+        //when
+        parkingService.processIncomingVehicle();
+
+        //then
+        verify(ticketDAO,times(1)).getNbTickets(vehicleRegistrationNumber);
+        verify(parkingSpotDAO, times(1)).getNextAvailableSlot(ParkingType.CAR);
+        verify(ticketDAO, times(1)).saveTicket(ticketCaptor.capture());
+        verify(inputReaderUtil, times(1)).readVehicleRegistrationNumber();
+
+        final Ticket savedTicket = ticketCaptor.getValue();
+        assertEquals(ParkingType.CAR, savedTicket.getParkingSpot().getParkingType());
+        assertEquals("ABCDEF", savedTicket.getVehicleRegNumber());
+        assertFalse(savedTicket.getIsRegularCustomer());
+    }
+
+    @Test
+    @DisplayName("should set IsRegularCustomer to true when number of tickets is greater than 0")
     public void processIncomingVehicleOfRegularCustomerTest() throws Exception {
         //given
         final String vehicleRegistrationNumber ="ABCDEF";
@@ -53,6 +80,14 @@ public class ParkingServiceTest {
 
         //then
         verify(ticketDAO,times(1)).getNbTickets(vehicleRegistrationNumber);
+        verify(parkingSpotDAO, times(1)).getNextAvailableSlot(ParkingType.CAR);
+        verify(ticketDAO, times(1)).saveTicket(ticketCaptor.capture());
+        verify(inputReaderUtil, times(1)).readVehicleRegistrationNumber();
+
+        final Ticket savedTicket = ticketCaptor.getValue();
+        assertEquals(ParkingType.CAR, savedTicket.getParkingSpot().getParkingType());
+        assertEquals("ABCDEF", savedTicket.getVehicleRegNumber());
+        assertTrue(savedTicket.getIsRegularCustomer());
     }
 
     @Test
@@ -93,11 +128,12 @@ public class ParkingServiceTest {
         ticket.setParkingSpot(parkingSpot);
         ticket.setInTime(new Date());
         ticket.setOutTime(null);
+        ticket.setIsRegularCustomer(true);
 
         when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn(vehicleRegNumber);
         when(ticketDAO.getTicket(vehicleRegNumber)).thenReturn(ticket);
         when(ticketDAO.updateTicket(any(Ticket.class))).thenReturn(false);
-        when(ticketDAO.getNbTickets(vehicleRegNumber)).thenReturn(2);
+
         //when
         parkingService.processExitingVehicle();
 
@@ -167,10 +203,11 @@ public class ParkingServiceTest {
         ticket.setParkingSpot(parkingSpot);
         ticket.setInTime(inTime);
         ticket.setOutTime(new Date());
+        ticket.setVehicleRegNumber(vehicleRegNumber);
+        ticket.setIsRegularCustomer(true);
         when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
         when(ticketDAO.getTicket(vehicleRegNumber)).thenReturn(ticket);
         when(ticketDAO.updateTicket(ticket)).thenReturn(true);
-        when(ticketDAO.getNbTickets(vehicleRegNumber)).thenReturn(4);
 
         //when
         parkingService.processExitingVehicle();
@@ -178,11 +215,14 @@ public class ParkingServiceTest {
         //then
         verify(inputReaderUtil, times(1)).readVehicleRegistrationNumber();
         verify(ticketDAO, times(1)).getTicket(vehicleRegNumber);
-        verify(ticketDAO,times(1)).getNbTickets(vehicleRegNumber);
         verify(parkingSpotDAO, times(1)).updateParking(any(ParkingSpot.class));
         verify(fareCalculatorService,times(1)).calculateFare(ticket,true);
-        verify(ticketDAO, times(1)).updateTicket(ticket);
+        verify(ticketDAO, times(1)).updateTicket(ticketCaptor.capture());
         verify(parkingSpotDAO, times(1)).updateParking(parkingSpot);
+        final Ticket updatedTicket = ticketCaptor.getValue();
+        assertNotNull(updatedTicket);
+        assertEquals(1, updatedTicket.getParkingSpot().getId());
+        assertTrue(updatedTicket.getIsRegularCustomer());
     }
 
     @Test
@@ -197,10 +237,10 @@ public class ParkingServiceTest {
         ticket.setParkingSpot(parkingSpot);
         ticket.setInTime(inTime);
         ticket.setOutTime(new Date());
+        ticket.setIsRegularCustomer(false);
         when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
         when(ticketDAO.getTicket(vehicleRegNumber)).thenReturn(ticket);
         when(ticketDAO.updateTicket(ticket)).thenReturn(true);
-        when(ticketDAO.getNbTickets(vehicleRegNumber)).thenReturn(1);
 
         //when
         parkingService.processExitingVehicle();
@@ -208,10 +248,13 @@ public class ParkingServiceTest {
         //then
         verify(inputReaderUtil, times(1)).readVehicleRegistrationNumber();
         verify(ticketDAO, times(1)).getTicket(vehicleRegNumber);
-        verify(ticketDAO,times(1)).getNbTickets(vehicleRegNumber);
         verify(parkingSpotDAO, times(1)).updateParking(any(ParkingSpot.class));
         verify(fareCalculatorService,times(1)).calculateFare(ticket,false);
-        verify(ticketDAO, times(1)).updateTicket(ticket);
+        verify(ticketDAO, times(1)).updateTicket(ticketCaptor.capture());
         verify(parkingSpotDAO, times(1)).updateParking(parkingSpot);
+        final Ticket updatedTicket = ticketCaptor.getValue();
+        assertNotNull(updatedTicket);
+        assertEquals(1, updatedTicket.getParkingSpot().getId());
+        assertFalse(updatedTicket.getIsRegularCustomer());
     }
 }
