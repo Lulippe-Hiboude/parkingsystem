@@ -7,6 +7,7 @@ import com.parkit.parkingsystem.model.Ticket;
 import com.parkit.parkingsystem.service.FareCalculatorService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Date;
@@ -133,7 +134,11 @@ public class FareCalculatorServiceTest {
         ticket.setOutTime(outTime);
         ticket.setParkingSpot(parkingSpot);
         fareCalculatorService.calculateFare(ticket);
-        assertEquals((0.75 * Fare.CAR_RATE_PER_HOUR), ticket.getPrice());
+
+        double expectedRate = (45.0/60.0)*Fare.CAR_RATE_PER_HOUR;
+        expectedRate = Math.ceil(expectedRate*100)/100 ;
+
+        assertEquals(expectedRate, ticket.getPrice());
     }
 
     @Test
@@ -201,7 +206,9 @@ public class FareCalculatorServiceTest {
         //when
         fareCalculatorService.calculateFare(ticket,true);
         //then
-        assertEquals(Fare.CAR_RATE_PER_HOUR * 0.95, ticket.getPrice());
+        double expectedRate = Fare.CAR_RATE_PER_HOUR*0.95;
+        expectedRate = Math.floor(expectedRate*100)/100 ;
+        assertEquals(expectedRate, ticket.getPrice());
     }
 
     @Test
@@ -221,4 +228,47 @@ public class FareCalculatorServiceTest {
         //then
         assertEquals(Fare.BIKE_RATE_PER_HOUR * 0.95, ticket.getPrice());
     }
+
+    @Test
+    @DisplayName("should return a fare rounding up")
+    public void calculateFareRoundingUpTest(){
+        //given
+        Date inTime = new Date();
+        inTime.setTime(System.currentTimeMillis() - (61 * 60 * 1000));
+        Date outTime = new Date();
+        ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, false);
+        ticket.setInTime(inTime);
+        ticket.setOutTime(outTime);
+        ticket.setParkingSpot(parkingSpot);
+
+        //when
+        fareCalculatorService.calculateFare(ticket);
+
+        //then
+        double expectedRate = (61.0/60.0)*Fare.CAR_RATE_PER_HOUR;
+        expectedRate = Math.ceil(expectedRate*100)/100 ;
+        assertEquals(expectedRate, ticket.getPrice(),0.001);
+    }
+
+    @Test
+    @DisplayName("should return a fare rounding down")
+    public void calculateFareRoundingDownTest(){
+        //given
+        Date inTime = new Date();
+        inTime.setTime(System.currentTimeMillis() - (103 * 60 * 1000));
+        Date outTime = new Date();
+        ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, false);
+        ticket.setInTime(inTime);
+        ticket.setOutTime(outTime);
+        ticket.setParkingSpot(parkingSpot);
+
+        //when
+        fareCalculatorService.calculateFare(ticket);
+
+        //then
+        double expectedRate = (103/60.0)*Fare.CAR_RATE_PER_HOUR;
+        expectedRate = Math.floor(expectedRate*100)/100 ;
+        assertEquals(expectedRate, ticket.getPrice(),0.001);
+    }
+
 }

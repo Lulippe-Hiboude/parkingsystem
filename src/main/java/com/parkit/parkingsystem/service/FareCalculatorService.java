@@ -3,6 +3,9 @@ package com.parkit.parkingsystem.service;
 import com.parkit.parkingsystem.constants.Fare;
 import com.parkit.parkingsystem.model.Ticket;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 public class FareCalculatorService {
     private static final double DISCOUNT_RATE = 0.05;
 
@@ -27,7 +30,8 @@ public class FareCalculatorService {
         if(discount){
         price *= (1-DISCOUNT_RATE);
          }
-        ticket.setPrice(price);
+        BigDecimal roundedPrice = new BigDecimal(String.valueOf(price)).setScale(2, RoundingMode.HALF_UP);
+        ticket.setPrice(roundedPrice.doubleValue());
     }
 
     private void validateOutTime(final Ticket ticket) {
@@ -36,7 +40,7 @@ public class FareCalculatorService {
         }
 
         if (ticket.getOutTime().before(ticket.getInTime())) {
-            throw new IllegalArgumentException("Out time provided is incorrect:" + ticket.getOutTime().toString());
+            throw new IllegalArgumentException("Out time provided is incorrect:" + ticket.getOutTime().toString() + "compared To In time : " + ticket.getInTime().toString());
         }
     }
 
