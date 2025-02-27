@@ -51,10 +51,10 @@ public class FareCalculatorService {
     }
 
     private double calculateTicketDurationInMinutes(final Ticket ticket) {
-        double inTimeInMillis = ticket.getInTime().getTime();
-        double outTimeInMillis = ticket.getOutTime().getTime();
-        double durationInMillis = outTimeInMillis - inTimeInMillis;
-        return durationInMillis / 60000.0;
+        long inTimeInMillis = ticket.getInTime().getTime();
+        long outTimeInMillis = ticket.getOutTime().getTime();
+        long durationInMillis = outTimeInMillis - inTimeInMillis;
+        return durationInMillis / 60000D;
     }
 
     private double convertMinutesToHours(final double minutes) {

@@ -6,11 +6,13 @@ import com.parkit.parkingsystem.util.InputReaderUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.time.Clock;
+
 public class InteractiveShell {
 
     private static final Logger logger = LogManager.getLogger("InteractiveShell");
 
-    public static void loadInterface(){
+    public static void loadInterface() throws Exception {
         logger.info("App initialized!!!");
         System.out.println("Welcome to Parking System!");
 
@@ -19,7 +21,8 @@ public class InteractiveShell {
         ParkingSpotDAO parkingSpotDAO = new ParkingSpotDAO();
         TicketDAO ticketDAO = new TicketDAO();
         FareCalculatorService fareCalculatorService = new FareCalculatorService();
-        ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO, fareCalculatorService);
+        Clock clock = Clock.systemUTC();
+        ParkingService parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO, fareCalculatorService,clock);
 
         while(continueApp){
             loadMenu();
